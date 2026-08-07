@@ -1,120 +1,131 @@
 class Solution {
-    private long gcd(long a, long b) {
-        while (b != 0) {
-            long temp = a % b;
-            a = b;
-            b = temp;
-        }
-
-        return a;
-    }
+    int primes[] = new int[] { 2, 3, 5, 7 };
+    int maxPrime = primes[primes.length - 1];
 
     public String smallestNumber(String num, long t) {
-        long temp = t;
+        int primeCount[] = new int[maxPrime + 1];
+        int numLength = num.length();
+        int minLength;
+        int firstZeroIndexFromLeft = 0;
 
-        for (int digit = 2; digit <= 9; digit++) {
-            while (temp % digit == 0) {
-                temp /= digit;
+        for (int prime : primes) {
+            while (t % prime == 0) {
+                t /= prime;
+                primeCount[prime]++;
             }
         }
 
-        if (temp != 1) {
+        if (t != 1) {
             return "-1";
         }
 
-        int n = num.length();
-        char[] digits = num.toCharArray();
+        minLength = getMinLength(primeCount);
 
-        long[] remaining = new long[n + 1];
-        remaining[0] = t;
+        if (numLength < minLength) {
+            return buildSuffix(primeCount, minLength, new char[minLength]);
+        }
 
-        int lastValidPos = n - 1;
+        char[] result = new char[numLength + 1];
 
-        for (int i = 0; i < n; i++) {
-            int digit = digits[i] - '0';
+        for (int i = 0; firstZeroIndexFromLeft < numLength
+                && (result[++i] = num.charAt(firstZeroIndexFromLeft)) != '0'; firstZeroIndexFromLeft++) {
+            logNum(primeCount, result[i], -1);
+        }
 
-            if (digit == 0) {
-                lastValidPos = i;
-                break;
+        if (getMinLength(primeCount) == 0) {
+            if (firstZeroIndexFromLeft == numLength) {
+                return num;
             }
-
-            long common = gcd(remaining[i], digit);
-            remaining[i + 1] = remaining[i] / common;
+            Arrays.fill(result, ++firstZeroIndexFromLeft, result.length, '1');
+            return new String(result, 1, numLength);
         }
 
-        if (remaining[n] == 1) {
-            return num;
-        }
-
-        for (int i = lastValidPos; i >= 0; i--) {
-            int currentDigit = digits[i] - '0';
-
-            for (int newDigit = currentDigit + 1;
-                 newDigit <= 9;
-                 newDigit++) {
-
-                digits[i] = (char) ('0' + newDigit);
-
-                long need = remaining[i];
-                need /= gcd(need, newDigit);
-
-                char[] suffix = new char[n - i - 1];
-                int suffixSize = 0;
-
-                for (int j = i + 1; j < n; j++) {
-                    int chosenDigit = 9;
-
-                    while (chosenDigit > 1 &&
-                           need % chosenDigit != 0) {
-                        chosenDigit--;
-                    }
-
-                    if (need % chosenDigit == 0) {
-                        need /= chosenDigit;
-                    }
-
-                    suffix[suffixSize++] =
-                        (char) ('0' + chosenDigit);
-                }
-
-                if (need == 1) {
-                    for (int a = 0, b = suffixSize - 1;
-                         a < b;
-                         a++, b--) {
-
-                        char tmp = suffix[a];
-                        suffix[a] = suffix[b];
-                        suffix[b] = tmp;
-                    }
-
-                    for (int j = i + 1; j < n; j++) {
-                        digits[j] = suffix[j - i - 1];
-                    }
-
-                    return new String(digits);
+        for (int last = numLength - 1, end = Math.min(firstZeroIndexFromLeft, last); end >= 0; end--) {
+            for (logNum(primeCount, result[end + 1], 1); ++result[end + 1] <= '9'; logNum(primeCount, result[end + 1], 1)) {
+                logNum(primeCount, result[end + 1], -1);
+                if (getMinLength(primeCount) <= last - end) {
+                    return buildSuffix(primeCount, last - end, result);
                 }
             }
-
-            digits[i] = num.charAt(i);
         }
 
-        StringBuilder factors = new StringBuilder();
-        long remainingT = t;
+        return buildSuffix(primeCount, result.length, result);
+    }
 
-        for (int digit = 9; digit >= 2; digit--) {
-            while (remainingT % digit == 0) {
-                factors.append(digit);
-                remainingT /= digit;
-            }
+    void logNum(int[] primeCount, int num, int value) {
+        if (num < '2') {
+            return;
         }
 
-        int requiredLength =
-            Math.max(n + 1, factors.length());
+        if (num == '9') {
+            primeCount[3] += value << 1;
+        } else if (num == '4') {
+            primeCount[2] += value << 1;
+        } else if (num == '8') {
+            primeCount[2] += value * 3;
+        } else if (num == '6') {
+            primeCount[2] += value;
+            primeCount[3] += value;
+        } else {
+            primeCount[num - '0'] += value;
+        }
+    }
 
-        while (factors.length() < requiredLength) {
-            factors.append('1');
+    String buildSuffix(int[] primeCount, int targetLength, char[] result) {
+        int index = result.length;
+
+        while (primeCount[3] > 1) {
+            primeCount[3] -= 2;
+            result[--index] = '9';
         }
 
-        return factors.reverse().toString();
+        while (primeCount[2] > 2) {
+            primeCount[2] -= 3;
+            result[--index] = '8';
+        }
+
+        while (primeCount[7]-- > 0) {
+            result[--index] = '7';
+        }
+
+        if (primeCount[2] > 0 && primeCount[3] > 0) {
+            result[--index] = '6';
+            primeCount[2]--;
+            primeCount[3]--;
+        }
+
+        while (primeCount[5]-- > 0) {
+            result[--index] = '5';
+        }
+
+        while (primeCount[2] > 1) {
+            primeCount[2] -= 2;
+            result[--index] = '4';
+        }
+
+        while (primeCount[3] > 0) {
+            primeCount[3]--;
+            result[--index] = '3';
+        }
+
+        while (primeCount[2] > 0) {
+            primeCount[2]--;
+            result[--index] = '2';
+        }
+
+        while (index + targetLength != result.length) {
+            result[--index] = '1';
+        }
+
+        return targetLength == result.length ? new String(result) : new String(result, 1, result.length - 1);
+    }
+
+    int getMinLength(int[] primeCount) {
+        int count2 = Math.max(0, primeCount[2]);
+        int count3 = Math.max(0, primeCount[3]);
+        int count23 = (count3 & 1) + (count2 % 3);
+
+        return (count3 >> 1) + (count2 / 3) + Math.max(0, primeCount[7]) + Math.max(0, primeCount[5])
+                + (count23 == 3 ? 2 : count23 > 0 ? 1 : 0);
     }
 }
