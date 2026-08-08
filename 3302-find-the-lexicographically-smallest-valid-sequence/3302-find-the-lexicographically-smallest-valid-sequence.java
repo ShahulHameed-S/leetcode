@@ -1,70 +1,67 @@
 class Solution {
     public int[] validSequence(String word1, String word2) {
-        int n = word1.length();
-        int m = word2.length();
-        int[] suffix = new int[m + 1];
 
-        suffix[m] = n;
+        char[] s = word1.toCharArray();
+        char[] t = word2.toCharArray();
 
-        int i = n - 1;
+        int n = s.length;
+        int m = t.length;
 
-        for (int j = m - 1; j >= 0; j--) {
-            while (i >= 0 && word1.charAt(i) != word2.charAt(j)) {
-                i--;
-            }
+        int[] suffix = new int[n + 1];
 
-            if (i < 0) {
-                suffix[j] = -1;
+        int j = m - 1;
+
+        for (int i = n - 1; i >= 0; i--) {
+
+            if (j >= 0 && s[i] == t[j]) {
+                suffix[i] = suffix[i + 1] + 1;
+                j--;
             } else {
-                suffix[j] = i;
-                i--;
+                suffix[i] = suffix[i + 1];
             }
         }
 
         int[] ans = new int[m];
 
-        int p1 = 0;
-        int p2 = 0;
+        int i = 0;
+        j = 0;
 
-        boolean usedMismatch = false;
+        while (i < n && j < m) {
 
-        while (p1 < n && p2 < m) {
-            if (word1.charAt(p1) == word2.charAt(p2)) {
-                ans[p2] = p1;
-                p1++;
-                p2++;
-            }
+            if (s[i] == t[j]) {
 
-            else if (!usedMismatch) {
-                if (p2 == m - 1) {
-                    ans[p2] = p1;
-                    usedMismatch = true;
-                    p1++;
-                    p2++;
-                }
+                ans[j] = i;
+                j++;
 
-                // check whether remaining word2
-                // can still be completed after p1
-                else if (suffix[p2 + 1] > p1) {
-                    ans[p2] = p1;
-                    usedMismatch = true;
-                    p1++;
-                    p2++;
-                }
+            } else {
 
-                else {
-                    p1++;
+                if (suffix[i + 1] >= m - j - 1) {
+
+                    ans[j] = i;
+                    j++;
+                    i++;
+                    break;
                 }
             }
 
-            else {
-                p1++;
-            }
+            i++;
         }
 
-        if (p2 != m) {
+        if (j < m && i == n)
             return new int[0];
+
+        while (i < n && j < m) {
+
+            if (s[i] == t[j]) {
+                ans[j] = i;
+                j++;
+            }
+
+            i++;
         }
+
+        if (j != m)
+            return new int[0];
 
         return ans;
     }
