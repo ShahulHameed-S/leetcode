@@ -2,7 +2,7 @@ import java.util.*;
 
 class DinnerPlates {
     private List<Stack<Integer>> table;
-    private TreeSet<Integer> available; // Keeps unique indices sorted in ascending order
+    private TreeSet<Integer> available; 
     private int capacity;
 
     public DinnerPlates(int capacity) {
@@ -12,12 +12,10 @@ class DinnerPlates {
     }
     
     public void push(int val) {
-        // Remove any tracking indices that point beyond our current table size
         while (!available.isEmpty() && available.first() >= table.size()) {
             available.pollFirst();
         }
         
-        // If no available space in existing stacks, create a new one
         if (available.isEmpty()) {
             table.add(new Stack<>());
             available.add(table.size() - 1);
@@ -26,7 +24,6 @@ class DinnerPlates {
         int index = available.first();
         table.get(index).push(val);
         
-        // If this stack has reached max capacity, remove it from available indices
         if (table.get(index).size() == capacity) {
             available.pollFirst();
         }
@@ -43,11 +40,7 @@ class DinnerPlates {
         
         Stack<Integer> stack = table.get(index);
         int val = stack.pop();
-        
-        // TreeSet prevents duplicates automatically if index is already present
         available.add(index);
-        
-        // Clean up the end of the table by removing trailing empty stacks
         while (!table.isEmpty() && table.get(table.size() - 1).isEmpty()) {
             table.remove(table.size() - 1);
         }
